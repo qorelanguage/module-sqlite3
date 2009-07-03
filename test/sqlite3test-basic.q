@@ -56,10 +56,10 @@ if (elements $ARGV)
 
 my $ds = new Datasource("sqlite3", "", "", $o.db, $o.enc);
 
-printf("Sqlite3 version used: %s\n", $ds.getServerVersion());
+if ($o.v) printf("Sqlite3 version used: %s\n", $ds.getServerVersion());
 
 
-printf("Test 1 - create table foo\n");
+if ($o.v) printf("Test 1 - create table foo\n");
 my $result = $ds.exec("create table foo (
                 id integer primary key autoincrement,
                 txt text,
@@ -71,22 +71,22 @@ my $result = $ds.exec("create table foo (
 cout($result);
 
 
-printf("Test 2 - Create view v_foo with statement containing object names as parameters\n");
+if ($o.v) printf("Test 2 - Create view v_foo with statement containing object names as parameters\n");
 my $result = $ds.exec("create view %s as select * from %s;", "v_foo", "foo");
 cout($result);
 
 
-printf("Test 3 - Start a transaction (should fail)\n");
+if ($o.v) printf("Test 3 - Start a transaction (should fail)\n");
 try
 {
     my $result = $ds.beginTransaction();
     cout($result);
 }
 catch ($ex)
-    printf("   Caught exception: %N\n\n", $ex);
+    if ($o.v) printf("   Caught exception: %N\n\n", $ex);
 
     
-printf("Test 4 - inserts\n");
+if ($o.v) printf("Test 4 - inserts\n");
 my $f = new File("utf8");
 $f.open2(get_script_dir() + "blob.png", O_RDONLY);
 my $data = $f.readBinary(-1);
@@ -100,45 +100,45 @@ for (my $i = 0; $i < 50; $i++)
     cout($result);
 }
 
-printf("Test 5 - commit\n");
+if ($o.v) printf("Test 5 - commit\n");
 my $result = $ds.commit();
 cout($result);
 
-printf("Test 6 - select from table\n");
+if ($o.v) printf("Test 6 - select from table\n");
 my $result = $ds.select("select * from foo;");
 cout($result);
 
-printf("Test 7 - select from view with replace-bind in the statement\n");
+if ($o.v) printf("Test 7 - select from view with replace-bind in the statement\n");
 my $result = $ds.select("select * from %s;", "v_foo");
 cout($result);
 
-printf("Test 8 - select rows from table\n");
+if ($o.v) printf("Test 8 - select rows from table\n");
 my $result = $ds.selectRows("select * from foo;");
 cout($result);
 
-printf("Test 9 - select rows from view with replace-bind in the statement\n");
+if ($o.v) printf("Test 9 - select rows from view with replace-bind in the statement\n");
 my $result = $ds.selectRows("select * from %s;", "v_foo");
 cout($result);
 
-printf("Test 10 - select from table via exec() with bindings\n");
+if ($o.v) printf("Test 10 - select from table via exec() with bindings\n");
 my $result = $ds.exec("select * from foo where %s < %v", "id", 6);
 cout($result);
 
-printf("Test 11 - select from table via select() with bindings\n");
+if ($o.v) printf("Test 11 - select from table via select() with bindings\n");
 my $result = $ds.select("select * from foo where %s < %v", "id", 6);
 cout($result);
 
-printf("Test 11 - select from table via selectRows() with bindings\n");
+if ($o.v) printf("Test 11 - select from table via selectRows() with bindings\n");
 my $result = $ds.selectRows("select * from foo where %s < %v", "id", 6);
 cout($result);
 
-printf("Test 12 - pragma call - with returning value\n");
+if ($o.v) printf("Test 12 - pragma call - with returning value\n");
 my $result = $ds.exec("PRAGMA encoding;");
 cout($result);
 my $result = $ds.exec("PRAGMA table_info(%s);", "foo");
 cout($result);
 
-printf("Test 13 - pragma call - settings with no returns\n");
+if ($o.v) printf("Test 13 - pragma call - settings with no returns\n");
 my $result = $ds.exec("PRAGMA count_changes=%s;", 1);
 cout($result);
 
