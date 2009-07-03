@@ -1,0 +1,46 @@
+sqlite3 (Sqlite3) module for Qore
+version 1.0 by Petr Vanek, David Nichols
+
+Requires qore 0.7.0 and sqlite3 headers and library to build
+
+The driver supports the following features:
+* all sqlite3 afinities (datatypes) are supported, except "date" types.
+* "date" types are supported only for writing from Qore. See Sqlite3
+  docs for more infromations about its dates handling.
+* multi-dimensional arrays are not supported for binding and retrieving
+* is thread-safe
+* transaction management is supported
+* transparent character encoding conversion is supported if necessary
+
+The driver's name is "sqlite3".
+ex: $db = new Datasource("sqlite3");
+
+The Qore sqlite3 driver uses binary communication with Sqlite3 files
+
+Documentation in docs/sqlite3-module-doc.html
+
+test/example scripts are stored in test/ subdirectory
+
+
+BUILD AND INSTALL
+-----------------
+
+Sqlite3 DBI module requires Sqlite3 library and headers.
+If your Sqlite3 library and includes are in a non-standard location you can
+use the --with-sqlite3 configure option or set the SQLITE3_DIR environment
+variable.
+
+configure
+make
+sudo make install
+
+The configure script will find out where your qore module directory is found
+and set this for the install directory.
+
+BUILD FROM SVN
+--------------
+
+reconf.sh
+configure
+make
+sudo make install
