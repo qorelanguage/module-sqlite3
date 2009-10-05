@@ -1,4 +1,28 @@
-2009-06-04 14:19  pvanek
+2009-09-21 11:07  david_nichols
 
-	  * initial import as separate project
+	* configure.ac: updated module configure scripts to select 64-bit
+	  target mode by default on snow leopard i386
+
+2009-09-10 06:49  david_nichols
+
+	* configure.ac: updated configure.ac to properly compile in 32-bit
+	  mode on OSX snow leopard (10.6)
+
+2009-07-20 13:16  david_nichols
+
+	* configure.ac, qore-sqlite3-module.spec: added opensuse 11.2
+	  detection to spec file, fixed rhel detection in spec files,
+	  updated configure.ac to work with older versions of autotools
+
+2009-07-03 15:02  subik
+
+	* test/sqlite3test-basic.q: make test less talkative without
+	  verbose option
+
+2009-07-03 08:07  subik
+
+	* ., AUTHORS, COPYING, ChangeLog, INSTALL, Makefile.am, NEWS,
+	  README, RELEASE-NOTES, configure.ac, docs, m4,
+	  qore-sqlite3-module.spec, reconf.sh, src, test: standard dir
+	  structure
 
