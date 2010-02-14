@@ -72,7 +72,7 @@ AbstractQoreNode * QoreSqlite3Executor::exec(
     const QoreListNode *args,
     ExceptionSink *xsink)
 {
-    ReferenceHolder<QoreHashNode> hash(reinterpret_cast<QoreHashNode*>(select(ds, qstr, args, xsink)), xsink);
+    ReferenceHolder<QoreHashNode> hash(reinterpret_cast<QoreHashNode*>(select_internal(ds, qstr, args, true, xsink)), xsink);
     if (*xsink)
         return 0;
 
@@ -82,46 +82,35 @@ AbstractQoreNode * QoreSqlite3Executor::exec(
     return new QoreBigIntNode(sqlite3_changes(m_handler));
 }
 
+AbstractQoreNode * QoreSqlite3Executor::execRaw(
+    Datasource *ds,
+    const QoreString *qstr,
+    ExceptionSink *xsink)
+{
+    ReferenceHolder<QoreHashNode> hash(reinterpret_cast<QoreHashNode*>(select_internal(ds, qstr, 0, false, xsink)), xsink);
+    if (*xsink)
+        return 0;
+
+    if (hash->size() > 0)
+        return hash.release();
+
+    return new QoreBigIntNode(sqlite3_changes(m_handler));
+}
+            
 AbstractQoreNode * QoreSqlite3Executor::select(
     Datasource *ds,
     const QoreString *qstr,
     const QoreListNode *args,
     ExceptionSink *xsink)
 {
-    QoreString statement(qstr);//new QoreString(qstr);
-    if (!parseForBind(statement, args, xsink))
-        return xsink->raiseException("DBI:SQLITE3:SELECT",
-                                      "failed to parse bind variables");
+    ReferenceHolder<QoreHashNode> hash(reinterpret_cast<QoreHashNode*>(select_internal(ds, qstr, args, true, xsink)), xsink);
+    if (*xsink)
+        return 0;
 
-    sqlite3_stmt *stmt;
+    if (hash->size() > 0)
+        return hash.release();
 
-    int rc = sqlite3_prepare_v2(m_handler, statement.getBuffer(), -1, &stmt, 0);
-    if (rc != SQLITE_OK)
-        return xsink->raiseException("DBI:SQLITE3:SELECT",
-                                      "sqlite3 error: %s", sqlite3_errmsg(m_handler));
-
-    if (!bindParameters(stmt, xsink))
-        return xsink->raiseException("DBI:SQLITE3:SELECT",
-                                      "failed to bind variables");
-
-    // columns as keys
-    ReferenceHolder<QoreHashNode> hash(new QoreHashNode(), xsink);
-
-    for (int i = 0; i < sqlite3_column_count(stmt); ++i)
-        hash->setKeyValue(sqlite3_column_name(stmt, i), new QoreListNode(), xsink);
-
-    // fetch the results
-    while (sqlite3_step(stmt) == SQLITE_ROW)
-    {
-        for (int i = 0; i < sqlite3_column_count(stmt); ++i)
-        {
-            QoreListNode * node = reinterpret_cast<QoreListNode *>(hash->getKeyValue(sqlite3_column_name(stmt, i)));
-            node->push(columnValue(stmt, i));
-        }
-    }
-
-    sqlite3_finalize(stmt);
-    return hash.release();
+    return new QoreBigIntNode(sqlite3_changes(m_handler));
 }
 
 AbstractQoreNode * QoreSqlite3Executor::select_rows(
@@ -338,4 +327,51 @@ bool QoreSqlite3Executor::bindParameters(sqlite3_stmt * stmt, ExceptionSink *xsi
         } // switch
     } // for
     return true;
+}
+
+AbstractQoreNode * QoreSqlite3Executor::select_internal(
+            Datasource *ds,
+            const QoreString *qstr,
+            const QoreListNode *args,
+            bool binding,
+            ExceptionSink *xsink)
+{
+    QoreString statement(qstr);//new QoreString(qstr);
+    if (binding) {
+        if (!parseForBind(statement, args, xsink))
+            return xsink->raiseException("DBI:SQLITE3:SELECT",
+                                         "failed to parse bind variables");
+    }
+
+    sqlite3_stmt *stmt;
+
+    int rc = sqlite3_prepare_v2(m_handler, statement.getBuffer(), -1, &stmt, 0);
+    if (rc != SQLITE_OK)
+        return xsink->raiseException("DBI:SQLITE3:SELECT",
+                                      "sqlite3 error: %s", sqlite3_errmsg(m_handler));
+
+    if (binding) {
+        if (!bindParameters(stmt, xsink))
+            return xsink->raiseException("DBI:SQLITE3:SELECT",
+                                         "failed to bind variables");
+    }
+
+    // columns as keys
+    ReferenceHolder<QoreHashNode> hash(new QoreHashNode(), xsink);
+
+    for (int i = 0; i < sqlite3_column_count(stmt); ++i)
+        hash->setKeyValue(sqlite3_column_name(stmt, i), new QoreListNode(), xsink);
+
+    // fetch the results
+    while (sqlite3_step(stmt) == SQLITE_ROW)
+    {
+        for (int i = 0; i < sqlite3_column_count(stmt); ++i)
+        {
+            QoreListNode * node = reinterpret_cast<QoreListNode *>(hash->getKeyValue(sqlite3_column_name(stmt, i)));
+            node->push(columnValue(stmt, i));
+        }
+    }
+
+    sqlite3_finalize(stmt);
+    return hash.release();
 }

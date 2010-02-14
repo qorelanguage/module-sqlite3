@@ -11,7 +11,7 @@ const opts =
     ( "help"    : "h,help",
       "db"      : "d,db=s",
       "enc"     : "e,encoding=s",
-      "verbose" : "v"
+      "v"       : "v"
  );
 
 sub usage()
@@ -29,7 +29,7 @@ sub usage()
 
 sub cout($var)
 {
-    if ($o.verbose)
+    if ($o.v)
         printf("    result: %N\n\n", $var);
 }
 
@@ -141,6 +141,17 @@ cout($result);
 if ($o.v) printf("Test 13 - pragma call - settings with no returns\n");
 my $result = $ds.exec("PRAGMA count_changes=%s;", 1);
 cout($result);
+
+
+if ($o.v) printf("Test 14 - execRaw() calls\n");
+# OK
+my $result = $ds.execRaw("select * from foo where id = 6");
+cout($result);
+# error
+try 
+    my $result = $ds.execRaw("select * from foo where %s < %v", "id", 6);
+catch($ex)
+    printf("Expected error: %s, %s\n", $ex.err, $ex.desc);
 
 
 $ds.rollback();

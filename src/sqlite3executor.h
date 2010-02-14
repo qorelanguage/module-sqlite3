@@ -53,6 +53,19 @@ class QoreSqlite3Executor
                                 const QoreListNode *args,
                                 ExceptionSink *xsink);
 
+        /*! \brief Implementation for Qore DB API execRaw().
+        It's primarily used for DDL statemets, but
+        it can handle all stuff. But there is no variable binding.
+        \param ds a Datasource reference from Qore API.
+        \param qstr a SQL statement from Qore API.
+        \param xsink exception handler.
+        \retval AbstractQoreNode* hash for SELECTs, count of the affected
+                rows for CRUD stuff.
+        */
+        AbstractQoreNode * execRaw(Datasource *ds,
+                                const QoreString *qstr,
+                                ExceptionSink *xsink);
+
         /*! \brief Implementation for Qore DB API select().
         \param ds a Datasource reference from Qore API.
         \param qstr a SQL statement from Qore API.
@@ -111,6 +124,21 @@ class QoreSqlite3Executor
         \retval bool true on success, false on error
         */
         bool bindParameters(sqlite3_stmt * stmt, ExceptionSink *xsink);
+
+        /*! \brief Internal implementation of select() DB API.
+        \param ds a Datasource reference from Qore API.
+        \param qstr a SQL statement from Qore API.
+        \param args a list with bindable parameters from Qore API.
+        \param binding flag if it should allow variable binding (true) or not (false)
+        \param xsink exception handler.
+        \retval AbstractQoreNode* QoreHashNode with coluns as keys, data as lists.
+        */
+        AbstractQoreNode * select_internal(
+            Datasource *ds,
+            const QoreString *qstr,
+            const QoreListNode *args,
+            bool binding,
+            ExceptionSink *xsink);
 };
 
 #endif

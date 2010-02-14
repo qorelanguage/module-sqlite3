@@ -151,6 +151,16 @@ static AbstractQoreNode *qore_sqlite3_exec(Datasource *ds,
     return exec.exec(ds, qstr, args, xsink);
 }
 
+static AbstractQoreNode *qore_sqlite3_exec_raw(Datasource *ds,
+                                            const QoreString *qstr,
+                                            ExceptionSink *xsink)
+{
+    checkInit();
+    QoreSqlite3Connection *d = (QoreSqlite3Connection *)ds->getPrivateData();
+    QoreSqlite3Executor exec(d->handler(), xsink);
+    return exec.execRaw(ds, qstr, xsink);
+}
+
 static int qore_sqlite3_open_datasource(Datasource *ds, ExceptionSink *xsink)
 {
 // 	printf("open datasource\n");
@@ -224,6 +234,7 @@ QoreStringNode *qore_sqlite3_module_init()
     methods.add(QDBI_METHOD_SELECT,             qore_sqlite3_select);
     methods.add(QDBI_METHOD_SELECT_ROWS,        qore_sqlite3_select_rows);
     methods.add(QDBI_METHOD_EXEC,               qore_sqlite3_exec);
+    methods.add(QDBI_METHOD_EXECRAW,            qore_sqlite3_exec_raw);
     methods.add(QDBI_METHOD_COMMIT,             qore_sqlite3_commit);
     methods.add(QDBI_METHOD_ROLLBACK,           qore_sqlite3_rollback);
     methods.add(QDBI_METHOD_GET_SERVER_VERSION, qore_sqlite3_get_server_version);
