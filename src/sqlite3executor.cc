@@ -82,6 +82,7 @@ AbstractQoreNode * QoreSqlite3Executor::exec(
     return new QoreBigIntNode(sqlite3_changes(m_handler));
 }
 
+#ifdef _QORE_HAS_DBI_EXECRAW
 AbstractQoreNode * QoreSqlite3Executor::execRaw(
     Datasource *ds,
     const QoreString *qstr,
@@ -96,6 +97,7 @@ AbstractQoreNode * QoreSqlite3Executor::execRaw(
 
     return new QoreBigIntNode(sqlite3_changes(m_handler));
 }
+#endif
             
 AbstractQoreNode * QoreSqlite3Executor::select(
     Datasource *ds,
