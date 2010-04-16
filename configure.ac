@@ -1,7 +1,7 @@
 # Process this file with autoconf to produce a configure script.
 
 # AC_PREREQ(2.59)
-AC_INIT([qore-sqlite3-module], [1.0.0],
+AC_INIT([qore-sqlite3-module], [1.0.1],
         [Petr Vanek <petr.vanek@qoretechnologies.com>],
         [qore-sqlite3-module])
 AM_INIT_AUTOMAKE

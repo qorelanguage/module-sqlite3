@@ -224,6 +224,12 @@ static int qore_sqlite3_abort_transaction_start(Datasource *ds,
     return qore_sqlite3_rollback(ds, xsink);
 }
 
+#ifdef _QORE_HAS_DBI_EXECRAW
+#define SQL3_DBI_CAP_HAS_EXECRAW DBI_CAP_HAS_EXECRAW
+#else
+#define SQL3_DBI_CAP_HAS_EXECRAW 0
+#endif
+
 QoreStringNode *qore_sqlite3_module_init()
 {
     pthread_key_create(&ptk_sqlite3, NULL);
@@ -250,6 +256,7 @@ QoreStringNode *qore_sqlite3_module_init()
     DBID_SQLITE3 = DBI.registerDriver("sqlite3", methods,
                                        DBI_CAP_LOB_SUPPORT | DBI_CAP_TRANSACTION_MANAGEMENT
                                        | DBI_CAP_BIND_BY_PLACEHOLDER | DBI_CAP_BIND_BY_VALUE
+                                       | SQL3_DBI_CAP_HAS_EXECRAW
                                      );
 
     return 0;
