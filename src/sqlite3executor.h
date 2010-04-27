@@ -140,6 +140,7 @@ class QoreSqlite3Executor
             const QoreString *qstr,
             const QoreListNode *args,
             bool binding,
+            const char * calltype,
             ExceptionSink *xsink);
 };
 

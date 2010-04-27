@@ -72,7 +72,7 @@ AbstractQoreNode * QoreSqlite3Executor::exec(
     const QoreListNode *args,
     ExceptionSink *xsink)
 {
-    ReferenceHolder<QoreHashNode> hash(reinterpret_cast<QoreHashNode*>(select_internal(ds, qstr, args, true, xsink)), xsink);
+    ReferenceHolder<QoreHashNode> hash(reinterpret_cast<QoreHashNode*>(select_internal(ds, qstr, args, true, "DBI:SQLITE3:EXEC", xsink)), xsink);
     if (*xsink)
         return 0;
 
@@ -88,7 +88,7 @@ AbstractQoreNode * QoreSqlite3Executor::execRaw(
     const QoreString *qstr,
     ExceptionSink *xsink)
 {
-    ReferenceHolder<QoreHashNode> hash(reinterpret_cast<QoreHashNode*>(select_internal(ds, qstr, 0, false, xsink)), xsink);
+    ReferenceHolder<QoreHashNode> hash(reinterpret_cast<QoreHashNode*>(select_internal(ds, qstr, 0, false, "DBI:SQLITE3:EXECRAW", xsink)), xsink);
     if (*xsink)
         return 0;
 
@@ -105,7 +105,7 @@ AbstractQoreNode * QoreSqlite3Executor::select(
     const QoreListNode *args,
     ExceptionSink *xsink)
 {
-    ReferenceHolder<QoreHashNode> hash(reinterpret_cast<QoreHashNode*>(select_internal(ds, qstr, args, true, xsink)), xsink);
+    ReferenceHolder<QoreHashNode> hash(reinterpret_cast<QoreHashNode*>(select_internal(ds, qstr, args, true, "DBI:SQLITE3:SELECT", xsink)), xsink);
     if (*xsink)
         return 0;
 
@@ -336,12 +336,13 @@ AbstractQoreNode * QoreSqlite3Executor::select_internal(
             const QoreString *qstr,
             const QoreListNode *args,
             bool binding,
+            const char * calltype,
             ExceptionSink *xsink)
 {
     QoreString statement(qstr);//new QoreString(qstr);
     if (binding) {
         if (!parseForBind(statement, args, xsink))
-            return xsink->raiseException("DBI:SQLITE3:SELECT",
+            return xsink->raiseException(calltype,
                                          "failed to parse bind variables");
     }
 
@@ -349,12 +350,12 @@ AbstractQoreNode * QoreSqlite3Executor::select_internal(
 
     int rc = sqlite3_prepare_v2(m_handler, statement.getBuffer(), -1, &stmt, 0);
     if (rc != SQLITE_OK)
-        return xsink->raiseException("DBI:SQLITE3:SELECT",
+        return xsink->raiseException(calltype,
                                       "sqlite3 error: %s", sqlite3_errmsg(m_handler));
 
     if (binding) {
         if (!bindParameters(stmt, xsink))
-            return xsink->raiseException("DBI:SQLITE3:SELECT",
+            return xsink->raiseException(calltype,
                                          "failed to bind variables");
     }
 
@@ -377,3 +378,4 @@ AbstractQoreNode * QoreSqlite3Executor::select_internal(
     sqlite3_finalize(stmt);
     return hash.release();
 }
+

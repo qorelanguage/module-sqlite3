@@ -150,8 +150,10 @@ cout($result);
 # error
 try 
     my $result = $ds.execRaw("select * from foo where %s < %v", "id", 6);
-catch($ex)
-    printf("Expected error: %s, %s\n", $ex.err, $ex.desc);
-
+catch($ex) {
+    if ($ex.err != "DBI:SQLITE3:SELECT" || $ex.desc != 'sqlite3 error: near "%": syntax error')
+        rethrow;
+}
 
 $ds.rollback();
+printf("All test passed\n");

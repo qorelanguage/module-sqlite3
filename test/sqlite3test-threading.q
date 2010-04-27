@@ -11,14 +11,17 @@ our $o;
 const opts = 
     ( "help"    : "h,help",
       "db"      : "d,db=s",
-      "enc"     : "e,encoding=s"
+      "enc"     : "e,encoding=s",
+      "v"       : "v,verbose"
  );
 
 sub usage()
 {
     printf("usage: %s [options]
- -h,--help          this help text
- -d,--db=ARG        set database name - to create sqlite3 file name or \":memory:\"
+ -h,--help          this help text.
+ -v,--verbose       more verbose output.
+ -d,--db=ARG        set database name - to create sqlite3 file name.
+                    No \":memory:\" database is allowed in this case.
                     Warning: the database will not be cleaned up.
  -e,--encoding=ARG  set database character set encoding (i.e. \"utf8\")\n",
        basename($ENV."_"));
@@ -42,6 +45,11 @@ if (elements $ARGV)
     exit(1);
 }
 
+if ( $o.db == ":memory:" ) {
+    stderr.printf("This test cannot be run against the ':memory:' database. Use real DB file\n");
+    exit(1);
+}
+
 
 # our $ds = new Datasource("sqlite3", "", "", "test.db");
 our $ds = new DatasourcePool("sqlite3", "", "", $o.db, $o.enc, "", 5, 20);
@@ -61,60 +69,77 @@ our $insertStmt = "insert into table1 (col1, col2, col3)
 
 our $selectStmt = "select * from table1 where id < %v";
 
+our $insertLock = new RWLock();
+
+
+sub cout($msg)
+{
+    if (! $o.v) return;
+    printf("TID %d : %s\n", gettid(), $msg);
+}
 
 
 sub insertWorker()
 {
-    printf("Starting insertWorker. Instances %d\n", $threadCount);
+    cout(sprintf("Starting insertWorker. Instances %d", $threadCount));
     for(my $i = 0; $i < $threadCount; ++$i)
         background insertExec();
-    printf("End insertWorker\n");
+    cout("End insertWorker");
 }
 
 sub insertExec()
 {
-    printf("Starting insertExec\n");
-#     $ds.beginTransaction();
+    cout("Starting insertExec");
+
+    $insertLock.writeLock();
+    on_exit $insertLock.writeUnlock();
+
+    $ds.beginTransaction();
     try
     {
-#         $ds.beginTransaction();
         my $result = $ds.exec($insertStmt, rand(), "Lorem Ipsum", rand());
+        cout(sprintf("Inserted count: %d", $result));
         $ds.commit();
     }
     catch (my $ex)
     {
-        printf("Insert failed (rollback will be performed): %N\n", $ex);
+        stderr.printf("Insert failed (rollback will be performed): %N\n", $ex);
         $ds.rollback();
+        rethrow;
     }
 
-    printf("End insertExec\n");
+    cout("End insertExec");
 }
 
 
 sub selectWorker()
 {
-    printf("Starting selectWorker. Instances %d\n", $threadCount);
+    cout(sprintf("Starting selectWorker. Instances %d", $threadCount));
     for(my $i = 0; $i < $threadCount; ++$i)
         background selectExec();
-    printf("End selectWorker\n");
+    cout("End selectWorker");
 }
 
 sub selectExec()
 {
-    printf("Starting selectExec\n");
+    cout("Starting selectExec");
     my $result = $ds.select($selectStmt, (rand()%1000)); #$threadCount+1);
-    printf("Selected count: %d\n", elements $result."id");
-    printf("End selectExec\n");
+    cout(sprintf("Selected count: %d", elements $result."id"));
+    cout("End selectExec");
 }
 
 
 try
 {
     $ds.exec($createStmt);
-    printf("table created\n");
+    cout("table created");
 }
-catch ($ex)
-    printf("table is not created: %N\n", $ex);
+catch ($ex) {
+    stderr.printf("table is not created: %N\n", $ex);
+    stderr.printf("maybe it exists from previous run.");
+    rethrow;
+}
+
 $ds.commit();
 
 background insertWorker();
@@ -124,3 +149,5 @@ usleep(300ms);
 background selectWorker();
 
 $ds.commit();
+printf("All tests passed\n");
+
