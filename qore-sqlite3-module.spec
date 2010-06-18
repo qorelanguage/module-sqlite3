@@ -74,16 +74,16 @@ BuildRequires: qore-devel
 BuildRequires: qore
 BuildRequires: openssl-devel
 # Sqlite RPM package name are different in distros
-%if 0%{?suse_version}
-Requires: sqlite3
-BuildRequires: sqlite3-devel
-%endif
 # fc
 %if 0%{?fedora_version}
 Requires: sqlite > 3.0
 BuildRequires: sqlite-devel > 3.0
+%else
+#%if 0%{?suse_version}
+Requires: sqlite3
+BuildRequires: sqlite3-devel
+#%endif
 %endif
-
 
 %description
 Sqlite3 DBI driver module for the Qore Programming Language.
