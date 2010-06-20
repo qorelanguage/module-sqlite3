@@ -1,3 +1,13 @@
+2010-06-18 12:29  david_nichols
+
+	* qore-sqlite3-module.spec: updated spec file to assume sqlite3*
+	  package name if not redhat (now works on mandriva)
+
+2010-06-17 15:25  david_nichols
+
+	* qore-sqlite3-module.spec: minor fixes in spec files (typos +
+	  rpmlint fixes)
+
 2010-06-15 18:49  david_nichols
 
 	* docs/sqlite3-module-doc.html: updated tikiwiki and added updated
