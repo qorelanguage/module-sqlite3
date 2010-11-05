@@ -151,7 +151,7 @@ cout($result);
 try 
     my $result = $ds.execRaw("select * from foo where %s < %v", "id", 6);
 catch($ex) {
-    if ($ex.err != "DBI:SQLITE3:SELECT" || $ex.desc != 'sqlite3 error: near "%": syntax error')
+    if ($ex.err != "DBI:SQLITE3:EXECRAW" || $ex.desc != 'sqlite3 error: near "%": syntax error')
         rethrow;
 }
 
