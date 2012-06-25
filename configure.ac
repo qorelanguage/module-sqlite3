@@ -231,24 +231,28 @@ AC_ARG_WITH([sqlite3],
                     [Sqlite3 base directory])],
     [if test ! -d "${with_sqlite3l}"; then AC_MSG_ERROR(directory ${with_sqlite3} does not exist for --with-sqlite3); unset with_sqlite3; fi])
 
-check_sqlite3()
-{
-    inc="$1/include"
-    if test "$1" = "/"; then
+check_sqlite3() {
+    a="$1"
+    if test \( "$a" = "/" -o -z "$a" \) -a -h "$a/lib${LIBSUFFIX}"; then
+        a=/usr
+    fi
+
+    inc="$a/include"
+    if test "$a" = "/"; then
        inc=/usr/include
     fi
     pdir=`ls -d $inc/sqlite3* 2>/dev/null | tail -1` 
     if test -n "$pdir"; then
        alt_inc=$pdir
     fi
-    #echo DBG: checking $1 inc=$inc alt_inc=$alt_inc
+    #echo DBG: checking $a inc=$inc alt_inc=$alt_inc
     if test -f "$inc/sqlite3.h"; then
        with_sqlite3_includes=$inc
     elif test -n "$alt_inc" -a -f "$alt_inc/sqlite3.h"; then
        with_sqlite3_includes=$alt_inc
     fi
     if test -z "$with_sqlite3_includes"; then
-       #echo DBG: sqlite3 $1 $inc not found
+       #echo DBG: sqlite3 $a $inc not found
        return
     else
        # check for include files
@@ -260,7 +264,7 @@ check_sqlite3()
        fi
     fi
 
-    lib="$1/lib${LIBSUFFIX}"
+    lib="$a/lib${LIBSUFFIX}"
 
     pdir=`ls -d $lib/sqlite3* 2>/dev/null |tail -1` 
     if test -n "$pdir"; then
@@ -292,7 +296,7 @@ check_sqlite3()
     fi
 
     if test -z "$with_sqlite3_libs"; then
-       #echo sqlite3 $1 libs not found
+       #echo sqlite3 $a libs not found
        unset with_sqlite3_includes
        return
     fi
@@ -375,7 +379,11 @@ set_qore_cppflags() {
 }
 
 find_qore() {
-    lib=$1/lib${LIBSUFFIX}
+    a="$1"
+    if test \( "$a" = "/" -o -z "$a" \) -a -h "$a/lib${LIBSUFFIX}"; then
+        a=/usr
+    fi
+    lib=$a/lib${LIBSUFFIX}
 
     # if we only want the static qore libraries
     if test -n "$qore_static"; then
@@ -404,10 +412,10 @@ find_qore() {
 
     AC_MSG_CHECKING([for qore include files])
     # try to find include files
-    if test "$1" = "/"; then
+    if test "$a" = "/"; then
         inc=/usr/include
     else
-        inc=$1/include
+        inc=$a/include
     fi
     if test -f "$inc/qore/Qore.h"; then
         AC_MSG_RESULT([found: $inc])
@@ -620,8 +628,7 @@ else
    printf " (32-bit)\n"
 fi
 
-show_library_feature()
-{
+show_library_feature() {
    printf "%-24s: " "$1"
    if test "$2" = "yes"; then
       printf "%-8s" yes
