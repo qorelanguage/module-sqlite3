@@ -22,6 +22,6 @@ endif
 
 install-exec-hook:
 	mv $(DESTDIR)$(libdir)/sqlite3.$(MODULE_SUFFIX) $(DESTDIR)$(libdir)/sqlite3-api-$(MODULE_API).qmod
-	rm -f $(DESTDIR)$(libdir)/sqlite3.la
+	rm -f $(DESTDIR)$(libdir)/sqlite3.la $(DESTDIR)$(libdir)/sqlite3.a
 
 
