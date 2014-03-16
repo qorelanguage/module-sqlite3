@@ -242,7 +242,7 @@ AC_ARG_ENABLE([single-compilation-unit],
 AC_ARG_WITH([sqlite3],
     [AS_HELP_STRING([--with-sqlite3@<:@=DIR@:>@],
                     [Sqlite3 base directory])],
-    [if test ! -d "${with_sqlite3l}"; then AC_MSG_ERROR(directory ${with_sqlite3} does not exist for --with-sqlite3); unset with_sqlite3; fi])
+    [if test ! -d "${with_sqlite3}"; then AC_MSG_ERROR(directory ${with_sqlite3} does not exist for --with-sqlite3); unset with_sqlite3; fi])
 
 check_sqlite3() {
     a="$1"
