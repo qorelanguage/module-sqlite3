@@ -181,12 +181,12 @@ bool QoreSqlite3Executor::parseForBind(QoreString & str,
         int offset = p - str.getBuffer();
 
         p++;
-        const AbstractQoreNode *v = args ? args->retrieve_entry(index++) : NULL;
+        const AbstractQoreNode *v = args ? args->retrieve_entry(index++) : 0;
         ++nIterations;
-        if (v == 0)
+        if (v == 0 && !is_nothing(v))
         {
             xsink->raiseException("DBI-EXEC-PARSE-EXCEPTION",
-                              "Parameter count mismatch (args: %d ; processed: %d)", argsSize, nIterations);
+                              "01 Parameter count mismatch (args: %d ; processed: %d)", argsSize, nIterations);
             return false;
         }
 
@@ -229,7 +229,7 @@ bool QoreSqlite3Executor::parseForBind(QoreString & str,
         p = str.getBuffer() + offset + tmp.strlen();
         tmp.clear();
 
-        m_realArgs->push(v->realCopy());
+        m_realArgs->push(v ? v->realCopy() : null());
 
         if (((*p) == '\'') || ((*p) == '\"'))
         {
@@ -271,6 +271,14 @@ bool QoreSqlite3Executor::bindParameters(sqlite3_stmt * stmt, ExceptionSink *xsi
 
         switch (argType)
         {
+        case NT_NULL:
+            if (SQLITE_OK != sqlite3_bind_null(stmt, i+1))
+            {
+                xsink->raiseException("DBI-EXEC-BIND-EXCEPTION",
+                                      "Cannot bind NULL.");
+                return false;
+            }
+            break;
         case NT_INT:
             if (SQLITE_OK != sqlite3_bind_int64(stmt, i+1, reinterpret_cast<const QoreBigIntNode*>(arg)->val))
             {
@@ -283,7 +291,7 @@ bool QoreSqlite3Executor::bindParameters(sqlite3_stmt * stmt, ExceptionSink *xsi
             if (SQLITE_OK != sqlite3_bind_double(stmt, i+1, reinterpret_cast<const QoreFloatNode*>(arg)->f))
             {
                 xsink->raiseException("DBI-EXEC-BIND-EXCEPTION",
-                                       "Cannot bind double/fload.");
+                                       "Cannot bind double/float.");
                 return false;
             }
             break;
