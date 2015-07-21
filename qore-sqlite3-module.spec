@@ -32,6 +32,16 @@
 %endif
 %endif
 
+# see if we can determine the distribution type
+%if 0%{!?dist:1}
+%define rh_dist %(if [ -f /etc/redhat-release ];then cat /etc/redhat-release|sed "s/[^0-9.]*//"|cut -f1 -d.;fi)
+%if 0%{?rh_dist}
+%define dist .rhel%{rh_dist}
+%else
+%define dist .unknown
+%endif
+%endif
+
 Summary: Sqlite3 DBI module for Qore
 Name: qore-sqlite3-module
 Version: 1.0.1
