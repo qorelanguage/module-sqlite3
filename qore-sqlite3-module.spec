@@ -20,7 +20,6 @@
 %endif
 
 %endif
-%endif
 
 # see if we can determine the distribution type
 %if 0%{!?dist:1}
