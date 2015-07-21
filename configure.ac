@@ -209,11 +209,11 @@ else
 		   CXXFLAGS="$CXXFLAGS -m32"
 		fi
                 # multiarch
-                if test "$LIBSUFFIX_SET" != "yes"; then
-		   if test -a "$host_cpu" = "x86_64" -a -d /usr/lib32; then
-		      LIBSUFFIX=32
-                   fi
-		   AC_SUBST(LIBSUFFIX)
+        if test "$LIBSUFFIX_SET" != "yes"; then
+            if test -a "$host_cpu" = "x86_64" -a -d /usr/lib32; then
+                LIBSUFFIX=32
+            fi
+            AC_SUBST(LIBSUFFIX)
 		fi
 		;;
      *darwin*)  if test "$GXX" = "yes"; then
