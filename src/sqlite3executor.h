@@ -3,7 +3,7 @@
 
   Qore Programming Language
 
-  Copyright 2003 - 2009 Qore Technologies, s.r.o <http://qore.org>
+  Copyright 2003 - 2021 Qore Technologies, s.r.o <http://qore.org>
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -45,37 +45,35 @@ class QoreSqlite3Executor
         \param qstr a SQL statement from Qore API.
         \param args a list with bindable parameters from Qore API.
         \param xsink exception handler.
-        \retval AbstractQoreNode* hash for SELECTs, count of the affected
+        \retval hash for SELECTs, count of the affected
                 rows for CRUD stuff.
         */
-        AbstractQoreNode * exec(Datasource *ds,
+        QoreValue exec(Datasource *ds,
                                 const QoreString *qstr,
                                 const QoreListNode *args,
                                 ExceptionSink *xsink);
 
-#ifdef _QORE_HAS_DBI_EXECRAW
         /*! \brief Implementation for Qore DB API execRaw().
         It's primarily used for DDL statemets, but
         it can handle all stuff. But there is no variable binding.
         \param ds a Datasource reference from Qore API.
         \param qstr a SQL statement from Qore API.
         \param xsink exception handler.
-        \retval AbstractQoreNode* hash for SELECTs, count of the affected
+        \retval hash for SELECTs, count of the affected
                 rows for CRUD stuff.
         */
-        AbstractQoreNode * execRaw(Datasource *ds,
+        QoreValue execRaw(Datasource *ds,
                                 const QoreString *qstr,
                                 ExceptionSink *xsink);
-#endif
 
         /*! \brief Implementation for Qore DB API select().
         \param ds a Datasource reference from Qore API.
         \param qstr a SQL statement from Qore API.
         \param args a list with bindable parameters from Qore API.
         \param xsink exception handler.
-        \retval AbstractQoreNode* QoreHashNode with coluns as keys, data as lists.
+        \retval QoreHashNode with coluns as keys, data as lists.
         */
-        AbstractQoreNode * select(
+        QoreValue select(
             Datasource *ds,
             const QoreString *qstr,
             const QoreListNode *args,
@@ -86,9 +84,9 @@ class QoreSqlite3Executor
         \param qstr a SQL statement from Qore API.
         \param args a list with bindable parameters from Qore API.
         \param xsink exception handler.
-        \retval AbstractQoreNode* QoreListNode with the list of hashes.
+        \retval QoreListNode with the list of hashes.
         */
-        AbstractQoreNode * select_rows(
+        QoreListNode * select_rows(
             Datasource *ds,
             const QoreString *qstr,
             const QoreListNode *args,
@@ -104,11 +102,10 @@ class QoreSqlite3Executor
         \param stmt a reference for sqlite3 SQL statement. It has to be
                     prepared and fetched already.
         \param index index of column to retrieve.
-        \retval AbstractQoreNode* Qore node type by its sqlite afinity.
-                    Possible nodes: QoreBigIntNode, QoreFloatNode, BinaryNode,
-                                    QoreStringNode, and null().
+        \retval Qore node type by its sqlite afinity.
+                    Possible types: int, float, binary, string, and NULL
         */
-        AbstractQoreNode * columnValue(sqlite3_stmt * stmt, int index);
+        QoreValue columnValue(sqlite3_stmt * stmt, int index);
 
         /*! \brief Prepare a string (SQL statement) for variables binding.
         It performs some Qore DB bind syntax validity checks too.
@@ -133,9 +130,9 @@ class QoreSqlite3Executor
         \param args a list with bindable parameters from Qore API.
         \param binding flag if it should allow variable binding (true) or not (false)
         \param xsink exception handler.
-        \retval AbstractQoreNode* QoreHashNode with coluns as keys, data as lists.
+        \retval QoreHashNode with columns as keys, data as lists.
         */
-        AbstractQoreNode * select_internal(
+        QoreHashNode * select_internal(
             Datasource *ds,
             const QoreString *qstr,
             const QoreListNode *args,

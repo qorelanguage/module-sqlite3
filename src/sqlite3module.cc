@@ -3,7 +3,7 @@
 
   Qore Programming Language
 
-  Copyright 2003 - 2009 Qore Technologies, s.r.o <http://qore.org>
+  Copyright 2003 - 2021 Qore Technologies, s.r.o <http://qore.org>
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -118,7 +118,7 @@ static int qore_sqlite3_rollback(Datasource *ds, ExceptionSink *xsink)
     return d->rollback(xsink) ? 0 : -1;
 }
 
-static AbstractQoreNode *qore_sqlite3_select_rows(Datasource *ds,
+static QoreValue qore_sqlite3_select_rows(Datasource *ds,
                                                    const QoreString *qstr,
                                                    const QoreListNode *args,
                                                    ExceptionSink *xsink)
@@ -129,7 +129,7 @@ static AbstractQoreNode *qore_sqlite3_select_rows(Datasource *ds,
     return exec.select_rows(ds, qstr, args, xsink);
 }
 
-static AbstractQoreNode *qore_sqlite3_select(Datasource *ds,
+static QoreValue qore_sqlite3_select(Datasource *ds,
                                               const QoreString *qstr,
                                               const QoreListNode *args,
                                               ExceptionSink *xsink)
@@ -140,7 +140,7 @@ static AbstractQoreNode *qore_sqlite3_select(Datasource *ds,
     return exec.select(ds, qstr, args, xsink);
 }
 
-static AbstractQoreNode *qore_sqlite3_exec(Datasource *ds,
+static QoreValue qore_sqlite3_exec(Datasource *ds,
                                             const QoreString *qstr,
                                             const QoreListNode *args,
                                             ExceptionSink *xsink)
@@ -151,8 +151,7 @@ static AbstractQoreNode *qore_sqlite3_exec(Datasource *ds,
     return exec.exec(ds, qstr, args, xsink);
 }
 
-#ifdef _QORE_HAS_DBI_EXECRAW
-static AbstractQoreNode *qore_sqlite3_exec_raw(Datasource *ds,
+static QoreValue qore_sqlite3_exec_raw(Datasource *ds,
                                             const QoreString *qstr,
                                             ExceptionSink *xsink)
 {
@@ -161,7 +160,6 @@ static AbstractQoreNode *qore_sqlite3_exec_raw(Datasource *ds,
     QoreSqlite3Executor exec(d->handler(), xsink);
     return exec.execRaw(ds, qstr, xsink);
 }
-#endif
 
 static int qore_sqlite3_open_datasource(Datasource *ds, ExceptionSink *xsink)
 {
@@ -194,7 +192,7 @@ static int qore_sqlite3_close_datasource(Datasource *ds)
     return 0;
 }
 
-static AbstractQoreNode *qore_sqlite3_get_server_version(Datasource *ds,
+static QoreValue qore_sqlite3_get_server_version(Datasource *ds,
                                                           ExceptionSink *xsink)
 {
     checkInit();
@@ -202,7 +200,7 @@ static AbstractQoreNode *qore_sqlite3_get_server_version(Datasource *ds,
     return new QoreStringNode(d->getServerVersion());
 }
 
-static AbstractQoreNode *qore_sqlite3_get_client_version(const Datasource *ds,
+static QoreValue qore_sqlite3_get_client_version(const Datasource *ds,
                                                           ExceptionSink *xsink)
 {
     checkInit();
@@ -218,18 +216,6 @@ static int qore_sqlite3_begin_tranaction(Datasource *ds,
     return d->begin(xsink) ? 0 : -1;
 }
 
-static int qore_sqlite3_abort_transaction_start(Datasource *ds,
-                                                 ExceptionSink *xsink)
-{
-    return qore_sqlite3_rollback(ds, xsink);
-}
-
-#ifdef _QORE_HAS_DBI_EXECRAW
-#define SQL3_DBI_CAP_HAS_EXECRAW DBI_CAP_HAS_EXECRAW
-#else
-#define SQL3_DBI_CAP_HAS_EXECRAW 0
-#endif
-
 QoreStringNode *qore_sqlite3_module_init()
 {
     pthread_key_create(&ptk_sqlite3, NULL);
@@ -242,21 +228,18 @@ QoreStringNode *qore_sqlite3_module_init()
     methods.add(QDBI_METHOD_SELECT,             qore_sqlite3_select);
     methods.add(QDBI_METHOD_SELECT_ROWS,        qore_sqlite3_select_rows);
     methods.add(QDBI_METHOD_EXEC,               qore_sqlite3_exec);
-#ifdef _QORE_HAS_DBI_EXECRAW
     methods.add(QDBI_METHOD_EXECRAW,            qore_sqlite3_exec_raw);
-#endif
     methods.add(QDBI_METHOD_COMMIT,             qore_sqlite3_commit);
     methods.add(QDBI_METHOD_ROLLBACK,           qore_sqlite3_rollback);
     methods.add(QDBI_METHOD_GET_SERVER_VERSION, qore_sqlite3_get_server_version);
     methods.add(QDBI_METHOD_GET_CLIENT_VERSION, qore_sqlite3_get_client_version);
     methods.add(QDBI_METHOD_BEGIN_TRANSACTION,  qore_sqlite3_begin_tranaction);
-    methods.add(QDBI_METHOD_ABORT_TRANSACTION_START, qore_sqlite3_abort_transaction_start);
 
     // register database functions with DBI subsystem
     DBID_SQLITE3 = DBI.registerDriver("sqlite3", methods,
                                        DBI_CAP_LOB_SUPPORT | DBI_CAP_TRANSACTION_MANAGEMENT
                                        | DBI_CAP_BIND_BY_PLACEHOLDER | DBI_CAP_BIND_BY_VALUE
-                                       | SQL3_DBI_CAP_HAS_EXECRAW
+                                       | DBI_CAP_HAS_EXECRAW
                                      );
 
     return 0;
