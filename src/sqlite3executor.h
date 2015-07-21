@@ -53,6 +53,7 @@ class QoreSqlite3Executor
                                 const QoreListNode *args,
                                 ExceptionSink *xsink);
 
+#ifdef _QORE_HAS_DBI_EXECRAW
         /*! \brief Implementation for Qore DB API execRaw().
         It's primarily used for DDL statemets, but
         it can handle all stuff. But there is no variable binding.
@@ -65,6 +66,7 @@ class QoreSqlite3Executor
         QoreValue execRaw(Datasource *ds,
                                 const QoreString *qstr,
                                 ExceptionSink *xsink);
+#endif
 
         /*! \brief Implementation for Qore DB API select().
         \param ds a Datasource reference from Qore API.
