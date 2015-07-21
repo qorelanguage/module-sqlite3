@@ -4,8 +4,9 @@
 
 %require-our
 %enable-all-warnings
-
 %disable-warning excess-args
+
+%requires Util
 
 our $o;
 
@@ -76,7 +77,7 @@ try {
     $result = $ds.beginTransaction();
     cout($result);
 } catch (hash<ExceptionInfo> $ex) {
-    if ($o.v) printf("   Caught exception: %N\n\n", $ex);
+    if ($o.v) printf("   Caught exception: %s\n\n", get_exception_string($ex));
 }
 
 
@@ -95,7 +96,7 @@ for (my $i = 0; $i < 50; $i++)
 }
 
 if ($o.v) printf("Test 5 - commit\n");
-$result = $ds.commit();
+my $result = $ds.commit();
 cout($result);
 
 if ($o.v) printf("Test 6 - select from table\n");
