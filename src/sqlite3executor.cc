@@ -337,4 +337,3 @@ QoreHashNode* QoreSqlite3Executor::select_internal(
     sqlite3_finalize(stmt);
     return hash.release();
 }
-
