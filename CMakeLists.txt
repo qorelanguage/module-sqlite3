@@ -5,9 +5,11 @@ cmake_minimum_required(VERSION 3.0.0)
 
 project(qore-sqlite3-module VERSION 1.0.1)
 
+option(INSTALL_DOCS "Install documentation" OFF)
+
 include(CheckCXXCompilerFlag)
 
-find_package(Qore REQUIRED)
+find_package(Qore 0.7.0 REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SQLITE3 REQUIRED sqlite3)
@@ -30,7 +32,7 @@ if(${CMAKE_SYSTEM_NAME} EQUAL "Linux")
 add_definitions(-D_GNU_SOURCE)
 endif()
 
-configure_file(${CMAKE_SOURCE_DIR}/cmake/config.h.in config.h)
+configure_file(${CMAKE_SOURCE_DIR}/cmake/config.h.cmake config.h)
 
 set(CPP_SRC
     src/sqlite3connection.cc
@@ -47,3 +49,9 @@ qore_binary_module(${module_name} ${PROJECT_VERSION} ${SQLITE3_LDFLAGS} Threads:
 qore_dist(${PROJECT_VERSION})
 
 qore_config_info()
+
+if(INSTALL_DOCS)
+include(GNUInstallDirs)
+install(FILES ${CMAKE_SOURCE_DIR}/docs/sqlite3-module-doc.html
+        DESTINATION ${CMAKE_INSTALL_FULL_DOCDIR}/html)
+endif()
