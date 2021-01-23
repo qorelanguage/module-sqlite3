@@ -49,7 +49,7 @@ set(CPP_SRC
 
 set(module_name "sqlite3")
 
-add_library(${module_name} SHARED ${CPP_SRC})
+add_library(${module_name} MODULE ${CPP_SRC})
 
 qore_binary_module(${module_name} ${PROJECT_VERSION} ${SQLITE3_LDFLAGS} Threads::Threads)
 
