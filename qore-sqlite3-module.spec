@@ -20,6 +20,7 @@
 %endif
 
 %endif
+%endif
 
 # see if we can determine the distribution type
 %if 0%{!?dist:1}
@@ -58,15 +59,12 @@ BuildRequires: qore-devel
 BuildRequires: qore
 BuildRequires: openssl-devel
 # Sqlite RPM package name are different in distros
-# fc
-%if 0%{?fedora_version}
-Requires: sqlite > 3.0
-BuildRequires: sqlite-devel > 3.0
-%else
-#%if 0%{?suse_version}
+%if 0%{?suse_version}
 Requires: sqlite3
 BuildRequires: sqlite3-devel
-#%endif
+%else
+Requires: sqlite > 3.0
+BuildRequires: sqlite-devel > 3.0
 %endif
 
 %description
