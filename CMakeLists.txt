@@ -3,7 +3,7 @@
 
 cmake_minimum_required(VERSION 3.0.0)
 
-project(qore-sqlite3-module VERSION 1.0.1)
+project(qore-sqlite3-module VERSION 1.0.2)
 
 option(INSTALL_DOCS "Install documentation" OFF)
 

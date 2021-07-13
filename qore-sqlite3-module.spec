@@ -44,7 +44,7 @@
 
 Summary: Sqlite3 DBI module for Qore
 Name: qore-sqlite3-module
-Version: 1.0.1
+Version: 1.0.2
 Release: 1%{dist}
 License: LGPL
 Group: Development/Languages
@@ -97,6 +97,9 @@ rm -rf $RPM_BUILD_ROOT
 %doc COPYING README RELEASE-NOTES ChangeLog AUTHORS test/sqlite3test-basic.q test/sqlite3test-threading.q test/blob.png docs/sqlite3-module-doc.html
 
 %changelog
+* Tue Jul 13 2021 David Nichols <david.nichols@qoretechnologies.com>
+- updated to version 1.0.2
+
 * Fri Apr 16 2010 Petr Vanek <petr.vanek@qoretechnologies.com>
 - updated to version 1.0.1
 
