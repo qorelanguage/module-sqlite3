@@ -1,9 +1,7 @@
-# TODO: Add defines for solaris and hp-ux.
-# TODO: Maybe not depend on cmake 3 but the project command is nice in cmake 3.
 
 cmake_minimum_required(VERSION 3.0.0)
 
-project(qore-sqlite3-module VERSION 1.0.2)
+project(qore-sqlite3-module VERSION 1.1.0)
 
 option(INSTALL_DOCS "Install documentation" OFF)
 
@@ -16,7 +14,7 @@ else()
     message(FATAL_ERROR "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
 endif()
 
-find_package(Qore 0.7.0 REQUIRED)
+find_package(Qore 1.0 REQUIRED)
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(SQLITE3 REQUIRED sqlite3)

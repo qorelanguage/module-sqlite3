@@ -23,60 +23,51 @@
 #include "sqlite3connection.h"
 
 
-QoreSqlite3Connection::QoreSqlite3Connection(sqlite3 * handler)
-        : m_handler(0)
-{
-    if (handler)
-        m_handler = handler;
+QoreSqlite3Connection::QoreSqlite3Connection(sqlite3* handler) : m_handler(handler) {
 }
 
-bool QoreSqlite3Connection::begin(ExceptionSink *xsink)
-{
+bool QoreSqlite3Connection::begin(ExceptionSink* xsink) {
+    if (!sqlite3_get_autocommit(m_handler)) {
+        return true;
+    }
     char * zErrMsg = 0;
     int rc = sqlite3_exec(m_handler, "BEGIN;", NULL, 0, &zErrMsg);
-    if (rc != SQLITE_OK)
-    {
-        xsink->raiseException("DBI:SQLITE3:BEGIN-ERROR", zErrMsg);
+    if (rc != SQLITE_OK) {
+        xsink->raiseException("SQLITE3-BEGIN-ERROR", zErrMsg);
         sqlite3_free(zErrMsg);
         return false;
     }
     return true;
 }
 
-bool QoreSqlite3Connection::commit(ExceptionSink *xsink)
-{
+bool QoreSqlite3Connection::commit(ExceptionSink *xsink) {
     char * zErrMsg = 0;
     int rc = sqlite3_exec(m_handler, "COMMIT;", NULL, 0, &zErrMsg);
-    if (rc != SQLITE_OK)
-    {
-        xsink->raiseException("DBI:SQLITE3:COMMIT-ERROR", zErrMsg);
+    if (rc != SQLITE_OK) {
+        xsink->raiseException("SQLITE3-COMMIT-ERROR", zErrMsg);
         sqlite3_free(zErrMsg);
         return false;
     }
     return true;
 }
 
-bool QoreSqlite3Connection::rollback(ExceptionSink *xsink)
-{
+bool QoreSqlite3Connection::rollback(ExceptionSink *xsink) {
     char * zErrMsg = 0;
 
     int rc = sqlite3_exec(m_handler, "ROLLBACK;", NULL, 0, &zErrMsg);
-    if (rc != SQLITE_OK)
-    {
-        xsink->raiseException("DBI:SQLITE3:ROLLBACK-ERROR", zErrMsg);
+    if (rc != SQLITE_OK) {
+        xsink->raiseException("SQLITE3-ROLLBACK-ERROR", zErrMsg);
         sqlite3_free(zErrMsg);
         return false;
     }
     return true;
 }
 
-bool QoreSqlite3Connection::close()
-{
+bool QoreSqlite3Connection::close() {
     int rc = sqlite3_close(m_handler);
     return (rc == SQLITE_OK);
 }
 
-char * QoreSqlite3Connection::getServerVersion()
-{
+char * QoreSqlite3Connection::getServerVersion() {
     return (char*)sqlite3_libversion();
 }

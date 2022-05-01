@@ -3,7 +3,7 @@
 
   Qore Programming Language
 
-  Copyright 2003 - 2009 Qore Technologies, s.r.o <http://qore.org>
+  Copyright 2003 - 2022 Qore Technologies, s.r.o <http://qore.org>
 
   This library is free software; you can redistribute it and/or
   modify it under the terms of the GNU Lesser General Public
@@ -26,62 +26,70 @@
 #include <sqlite3.h>
 #include <qore/Qore.h>
 
-
 /*! \brief A Qore ready wrapper for Sqlite3 API.
-There is only one instance of this class in this module.
-All select/exec depending stuff is located in QoreSqlite3Executor,
-the class with created instances on demand for each statement.
-\author Petr Vanek <petr.vanek@qoretechnologies.com>
+    There is only one instance of this class in this module.
+    All select/exec depending stuff is located in QoreSqlite3Executor,
+    the class with created instances on demand for each statement.
+
+    \author Petr Vanek <petr.vanek@qoretechnologies.com>
 */
 class QoreSqlite3Connection
 {
 public:
     /*! \brief Cosntruct a Sqlite3 driver for Qore module.
-    \param sqlite3 * a reference to already inicialized sqlite3 handler.
-    */
-    QoreSqlite3Connection(sqlite3 * handler);
 
-    ~QoreSqlite3Connection() {};
+        \param sqlite3 * a reference to already inicialized sqlite3 handler.
+    */
+    DLLLOCAL QoreSqlite3Connection(sqlite3* handler);
+
+    DLLLOCAL ~QoreSqlite3Connection() {};
 
     /*! \brief Public access to the DB conection handler.
-    \retval sqlite3* sqlite3 handler.
+
+        \retval sqlite3* sqlite3 handler.
     */
-    sqlite3 * handler() { return m_handler; };
+    DLLLOCAL sqlite3* handler() { return m_handler; };
 
     /*! \brief Start a transaction.
-    Error checking is left for sqlite3 engine.
-    \retval bool true for success; false for any error.
+        Error checking is left for sqlite3 engine.
+
+        \retval bool true for success; false for any error.
     */
-    bool begin(ExceptionSink *xsink);
+    DLLLOCAL bool begin(ExceptionSink *xsink);
 
     /*! \brief Preforms a COMMIT statement without any transaction checking.
-    Error checking is left for sqlite3 engine.
-    \retval bool true for success; false for any error.
+        Error checking is left for sqlite3 engine.
+
+        \retval bool true for success; false for any error.
     */
-    bool commit(ExceptionSink *xsink);
+    DLLLOCAL bool commit(ExceptionSink *xsink);
 
     /*! \brief Preforms a ROLLBACK statement without any transaction checking.
-    Error checking is left for sqlite3 engine.
-    \retval bool true for success; false for any error.
+        Error checking is left for sqlite3 engine.
+
+        \retval bool true for success; false for any error.
     */
-    bool rollback(ExceptionSink *xsink);
+    DLLLOCAL bool rollback(ExceptionSink *xsink);
 
     /*! \brief Close active sqlite3 handler.
-    \retval bool true on success; false on error.
+
+        \retval bool true on success; false on error.
     */
-    bool close();
+    DLLLOCAL bool close();
 
     /*! \brief Get sqlite3 backend version.
-    Sqlite DB engine is "serverless" so there is only this method
-    as we don't need any "client version". Qore DB API is using this
-    method for both get*Version() methods.
-    \retval char* A string with Sqlite3 library in use (format: X.Y.Z)
+
+        Sqlite DB engine is "serverless" so there is only this method
+        as we don't need any "client version". Qore DB API is using this
+        method for both get*Version() methods.
+
+        \retval char* A string with Sqlite3 library in use (format: X.Y.Z)
     */
-    char * getServerVersion();
+    DLLLOCAL char* getServerVersion();
 
 private:
-    //! Everywhere used current sqlite3 connection.
-    sqlite3 * m_handler;
+    //! The current sqlite3 connection.
+    sqlite3* m_handler;
 };
 
 #endif

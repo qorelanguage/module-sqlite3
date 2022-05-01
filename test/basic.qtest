@@ -1,0 +1,225 @@
+#!/usr/bin/env qore
+
+# sqlite3 test script
+
+%require-types
+%new-style
+%strict-args
+%enable-all-warnings
+
+%requires Util
+%requires QUnit
+
+%exec-class Sqlite3BasicTest
+
+class Sqlite3BasicTest inherits QUnit::Test {
+    public {
+        Datasource ds;
+
+        const MyOpts = Opts + {
+            "db": "d,db=s",
+            "enc": "e,encoding=s",
+        };
+
+        const OptionColumn = 22;
+    }
+
+    constructor() : QUnit::Test("Dir", "1.0", \ARGV, MyOpts) {
+        ds = new Datasource("sqlite3", "", "", m_options.db ?? "test.sqlite", m_options.enc);
+
+        if (m_options.verbose > 2) {
+            printf("Sqlite3 version used: %s\n", ds.getServerVersion());
+        }
+
+        addTestCase("BasicTest", \basicTest());
+
+        set_return_value(main());
+    }
+
+    basicTest() {
+        execIgnore("drop table foo");
+        execIgnore("drop view v_foo");
+
+        auto result = ds.exec("create table foo (
+    id integer primary key autoincrement,
+    txt text,
+    int integer,
+    dbl real,
+    blb blob,
+    bol integer
+)");
+        on_exit execIgnore("drop table foo");
+        assertEq(0, result);
+
+        result = ds.exec("create view %s as select * from %s;", "v_foo", "foo");
+        on_exit execIgnore("drop view v_foo");
+        assertEq(0, result);
+
+        binary dat = File::readBinaryFile(get_script_dir() + "blob.png");
+        {
+            bool b;
+            for (int i = 0; i < 50; i++) {
+                b = (i % 2 == 0);
+                result = ds.exec("insert into foo (txt, int, dbl, blb, bol) values (%v, %v, %v, %v, %v)",
+                    "lorem ipsum", rand(), rand()/1.0, dat, b);
+                assertEq(1, result);
+            }
+        }
+
+        result = ds.commit();
+        assertNothing(result);
+
+        result = ds.select("select * from foo order by id");
+        assertEq(50, result.txt.size());
+        map assertEq(dat, $1), result.blb;
+        map assertTrue($1 >= 0 && $1 <= 1), result.bol;
+        map assertEq((Type::String, Type::Int), ($1.txt.type(), $1."int".type())), result.contextIterator();
+        map assertEq($#, $1 - 1), result.id;
+
+        result = ds.select("select * from %s order by id;", "v_foo");
+        assertEq(50, result.txt.size());
+        map assertEq(dat, $1), result.blb;
+        map assertTrue($1 >= 0 && $1 <= 1), result.bol;
+        map assertEq((Type::String, Type::Int), ($1.txt.type(), $1."int".type())), result.contextIterator();
+        map assertEq($#, $1 - 1), result.id;
+
+        result = ds.selectRows("select * from foo order by id;");
+        assertEq(50, result.size());
+        map assertEq(dat, $1.blb), result;
+        map assertTrue($1.bol >= 0 && $1.bol <= 1), result;
+        map assertEq((Type::String, Type::Int), ($1.txt.type(), $1."int".type())), result;
+        map assertEq($#, $1.id - 1), result;
+
+        result = ds.selectRows("select * from %s;", "v_foo");
+        assertEq(50, result.size());
+        map assertEq(dat, $1.blb), result;
+        map assertTrue($1.bol >= 0 && $1.bol <= 1), result;
+        map assertEq((Type::String, Type::Int), ($1.txt.type(), $1."int".type())), result;
+        map assertEq($#, $1.id - 1), result;
+
+        result = ds.exec("select * from foo where %s < %v", "id", 6);
+        assertEq(5, result.txt.size());
+        map assertEq(dat, $1), result.blb;
+        map assertTrue($1 >= 0 && $1 <= 1), result.bol;
+        map assertEq((Type::String, Type::Int), ($1.txt.type(), $1."int".type())), result.contextIterator();
+        map assertEq($#, $1 - 1), result.id;
+
+        # Test 10 - select from table via select() with bindings
+        result = ds.select("select * from foo where %s < %v", "id", 6);
+        assertEq(5, result.txt.size());
+        map assertEq(dat, $1), result.blb;
+        map assertTrue($1 >= 0 && $1 <= 1), result.bol;
+        map assertEq((Type::String, Type::Int), ($1.txt.type(), $1."int".type())), result.contextIterator();
+        map assertEq($#, $1 - 1), result.id;
+
+        # Test 11 - select from table via selectRows() with bindings
+        result = ds.selectRows("select * from foo where %s < %v", "id", 6);
+        assertEq(5, result.size());
+        map assertEq(dat, $1.blb), result;
+        map assertTrue($1.bol >= 0 && $1.bol <= 1), result;
+        map assertEq((Type::String, Type::Int), ($1.txt.type(), $1."int".type())), result;
+        map assertEq($#, $1.id - 1), result;
+
+        # Test 12 - pragma call - with returning value
+        result = ds.exec("PRAGMA encoding");
+        assertEq(1, result.size());
+        assertEq(1, result.encoding.lsize());
+        assertEq("UTF-8", result.encoding[0]);
+        result = ds.exec("PRAGMA table_info(%s);", "foo");
+        assertEq(6, result.size());
+
+        # Test 13 - pragma call - settings with no returns
+        result = ds.exec("PRAGMA count_changes=%s", 1);
+        assertEq(1, result);
+
+        # Test 14 - execRaw() calls
+        result = ds.execRaw("select * from foo where id = 6");
+        assertEq({
+            "id": 6,
+            "txt": "lorem ipsum",
+            "blb": dat,
+            "bol": 0,
+        }, (map {$1.key: $1.value[0]}, result.pairIterator(), $1.key != "int" && $1.key != "dbl"));
+
+        {
+            AbstractSQLStatement stmt = ds.getSQLStatement();
+            on_error stmt.rollback();
+            on_success stmt.commit();
+            stmt.prepare("select id, txt, blb, bol from foo where id = 6");
+            assertEq(True, stmt.next());
+            assertEq({
+                "id": 6,
+                "txt": "lorem ipsum",
+                "blb": dat,
+                "bol": 0,
+            }, stmt.fetchRow());
+        }
+
+        {
+            AbstractSQLStatement stmt = ds.getSQLStatement();
+            on_error stmt.rollback();
+            on_success stmt.commit();
+            stmt.prepare("select id, txt, int, blb, bol from foo order by id");
+            int offset = 0;
+            while (*hash<auto> h = stmt.fetchColumns(10)) {
+                assertEq(10, h.id.size());
+
+                map assertEq(dat, $1), h.blb;
+                map assertTrue($1 >= 0 && $1 <= 1), h.bol;
+                map assertEq((Type::String, Type::Int), ($1.txt.type(), $1."int".type())), h.contextIterator();
+                map assertEq($# + offset, $1 - 1), h.id;
+                offset += 10;
+            }
+        }
+
+        {
+            AbstractSQLStatement stmt = ds.getSQLStatement();
+            on_error stmt.rollback();
+            on_success stmt.commit();
+            stmt.prepare("select id, txt, int, blb, bol from foo order by id");
+            int offset = 0;
+            while (*list<hash<auto>> l = stmt.fetchRows(10)) {
+                assertEq(10, l.size());
+
+                map assertEq(dat, $1.blb), l;
+                map assertTrue($1.bol >= 0 && $1.bol <= 1), l;
+                map assertEq((Type::String, Type::Int), ($1.txt.type(), $1."int".type())), l;
+                map assertEq($# + offset, $1.id - 1), l;
+                offset += 10;
+            }
+        }
+
+        {
+            AbstractSQLStatement stmt = ds.getSQLStatement();
+            on_error stmt.rollback();
+            on_success stmt.commit();
+            stmt.prepare("update foo set int = %v where id = 1");
+            stmt.bind(rand());
+            stmt.exec();
+            assertEq(1, stmt.affectedRows());
+        }
+
+        ds.rollback();
+    }
+
+    execIgnore(string sql) {
+        try {
+            on_error ds.rollback();
+            on_success ds.commit();
+            ds.vexec(sql, argv);
+        } catch () {
+        }
+    }
+
+    cout(auto val) {
+        if (m_options.verbose > 2) {
+            printf("    result: %N\n\n", val);
+        }
+    }
+
+    private usageIntern() {
+        TestReporter::usageIntern(OptionColumn);
+        printOption("-d,--db=ARG", "set the DB connection (ex: \"sqlite3:x/y@file.sqlite\")", OptionColumn);
+        printOption("-e,--encoding=ARG", "the character encoding to use", OptionColumn);
+    }
+}
