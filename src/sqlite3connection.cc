@@ -23,7 +23,8 @@
 #include "sqlite3connection.h"
 
 
-QoreSqlite3Connection::QoreSqlite3Connection(sqlite3* handler) : m_handler(handler) {
+QoreSqlite3Connection::QoreSqlite3Connection(sqlite3* handler, const QoreEncoding* enc)
+        : m_handler(handler), enc(enc) {
 }
 
 bool QoreSqlite3Connection::begin(ExceptionSink* xsink) {
@@ -40,7 +41,7 @@ bool QoreSqlite3Connection::begin(ExceptionSink* xsink) {
     return true;
 }
 
-bool QoreSqlite3Connection::commit(ExceptionSink *xsink) {
+bool QoreSqlite3Connection::commit(ExceptionSink* xsink) {
     char * zErrMsg = 0;
     int rc = sqlite3_exec(m_handler, "COMMIT;", NULL, 0, &zErrMsg);
     if (rc != SQLITE_OK) {
@@ -51,7 +52,7 @@ bool QoreSqlite3Connection::commit(ExceptionSink *xsink) {
     return true;
 }
 
-bool QoreSqlite3Connection::rollback(ExceptionSink *xsink) {
+bool QoreSqlite3Connection::rollback(ExceptionSink* xsink) {
     char * zErrMsg = 0;
 
     int rc = sqlite3_exec(m_handler, "ROLLBACK;", NULL, 0, &zErrMsg);

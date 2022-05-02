@@ -1,23 +1,23 @@
 /*
-  sqlite3executor.cc
+    sqlite3executor.cc
 
-  Qore Programming Language
+    Qore Programming Language
 
-  Copyright 2003 - 2022 Qore Technologies, s.r.o <http://qore.org>
+    Copyright 2003 - 2022 Qore Technologies, s.r.o <http://qore.org>
 
-  This library is free software; you can redistribute it and/or
-  modify it under the terms of the GNU Lesser General Public
-  License as published by the Free Software Foundation; either
-  version 2.1 of the License, or (at your option) any later version.
+    This library is free software; you can redistribute it and/or
+    modify it under the terms of the GNU Lesser General Public
+    License as published by the Free Software Foundation; either
+    version 2.1 of the License, or (at your option) any later version.
 
-  This library is distributed in the hope that it will be useful,
-  but WITHOUT ANY WARRANTY; without even the implied warranty of
-  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
-  Lesser General Public License for more details.
+    This library is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+    Lesser General Public License for more details.
 
-  You should have received a copy of the GNU Lesser General Public
-  License along with this library; if not, write to the Free Software
-  Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+    You should have received a copy of the GNU Lesser General Public
+    License along with this library; if not, write to the Free Software
+    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
 */
 
 #include "sqlite3executor.h"
@@ -142,7 +142,8 @@ int QoreSqlite3ExecBase::bindParameters(sqlite3_stmt* stmt, ExceptionSink* xsink
                 QoreString str;
                 d->format(str, "IF");
                 if (SQLITE_OK != sqlite3_bind_text(stmt, i+1, str.c_str(), str.strlen(), SQLITE_TRANSIENT)) {
-                    xsink->raiseException("SQLITE3-BIND-EXCEPTION", "Failed to bind date '%s' as string", str.c_str());
+                    xsink->raiseException("SQLITE3-BIND-EXCEPTION", "Failed to bind date '%s' as string",
+                        str.c_str());
                     return -1;
                 }
                 break;
@@ -152,7 +153,8 @@ int QoreSqlite3ExecBase::bindParameters(sqlite3_stmt* stmt, ExceptionSink* xsink
                 QoreString str;
                 n->toString(str);
                 if (SQLITE_OK != sqlite3_bind_text(stmt, i+1, str.c_str(), str.strlen(), SQLITE_TRANSIENT)) {
-                    xsink->raiseException("SQLITE3-BIND-EXCEPTION", "Failed to bind number '%s' as string", str.c_str());
+                    xsink->raiseException("SQLITE3-BIND-EXCEPTION", "Failed to bind number '%s' as string",
+                        str.c_str());
                     return -1;
                 }
                 break;
@@ -202,8 +204,8 @@ QoreValue QoreSqlite3ExecBase::columnValue(sqlite3_stmt * stmt, int index) {
     return new QoreStringNode((const char*)sqlite3_column_text(stmt, index));
 }
 
-QoreSqlite3Executor::QoreSqlite3Executor(sqlite3 * handler, ExceptionSink *xsink)
-        : QoreSqlite3ExecBase(new QoreListNode(autoTypeInfo)), m_handler(handler) {
+QoreSqlite3Executor::QoreSqlite3Executor(sqlite3* handler, const QoreEncoding* enc, ExceptionSink* xsink)
+        : QoreSqlite3ExecBase(enc, new QoreListNode(autoTypeInfo)), m_handler(handler) {
 }
 
 QoreSqlite3Executor::~QoreSqlite3Executor() {
@@ -213,7 +215,7 @@ QoreValue QoreSqlite3Executor::exec(
         Datasource *ds,
         const QoreString *qstr,
         const QoreListNode *args,
-        ExceptionSink *xsink) {
+        ExceptionSink* xsink) {
     ReferenceHolder<QoreHashNode> hash(reinterpret_cast<QoreHashNode*>(select_internal(ds, qstr, args, true,
         "SQLITE3-EXEC", xsink)), xsink);
     if (*xsink) {
@@ -230,7 +232,7 @@ QoreValue QoreSqlite3Executor::exec(
 QoreValue QoreSqlite3Executor::execRaw(
     Datasource *ds,
     const QoreString *qstr,
-    ExceptionSink *xsink) {
+    ExceptionSink* xsink) {
     ReferenceHolder<QoreHashNode> hash(reinterpret_cast<QoreHashNode*>(select_internal(ds, qstr, 0, false,
         "SQLITE3-EXECRAW", xsink)), xsink);
     if (*xsink) {
@@ -248,7 +250,7 @@ QoreValue QoreSqlite3Executor::select(
     Datasource *ds,
     const QoreString *qstr,
     const QoreListNode *args,
-    ExceptionSink *xsink) {
+    ExceptionSink* xsink) {
     ReferenceHolder<QoreHashNode> hash(reinterpret_cast<QoreHashNode*>(select_internal(ds, qstr, args, true,
             "SQLITE3-SELECT", xsink)), xsink);
     if (*xsink) {
@@ -266,8 +268,14 @@ QoreListNode* QoreSqlite3Executor::select_rows(
     Datasource *ds,
     const QoreString *qstr,
     const QoreListNode *args,
-    ExceptionSink *xsink) {
-    QoreString statement(qstr);
+    ExceptionSink* xsink) {
+    TempEncodingHelper qstr0(qstr, enc, xsink);
+    if (*xsink) {
+        return nullptr;
+    }
+    size_t len = qstr0->strlen();
+    size_t allocated = qstr0->capacity();
+    QoreString statement(qstr0.giveBuffer(), len, allocated, enc);
     if (parseForBind(statement, args, xsink)) {
         xsink->raiseException("SQLITE3-SELECT-ROWS", "failed to parse bind variables");
         return nullptr;
@@ -279,6 +287,7 @@ QoreListNode* QoreSqlite3Executor::select_rows(
         xsink->raiseException("SQLITE3-SELECT-ROWS", "sqlite3 error: %s", sqlite3_errmsg(m_handler));
         return nullptr;
     }
+    ON_BLOCK_EXIT(sqlite3_finalize, stmt);
 
     if (bindParameters(stmt, xsink)) {
         xsink->raiseException("SQLITE3-SELECT-ROWS", "failed to bind variables");
@@ -296,7 +305,6 @@ QoreListNode* QoreSqlite3Executor::select_rows(
         res->push(head, xsink);
     }
 
-    sqlite3_finalize(stmt);
     return res.release();
 }
 
@@ -306,8 +314,14 @@ QoreHashNode* QoreSqlite3Executor::select_internal(
             const QoreListNode *args,
             bool binding,
             const char * calltype,
-            ExceptionSink *xsink) {
-    QoreString statement(qstr);
+            ExceptionSink* xsink) {
+    TempEncodingHelper qstr0(qstr, enc, xsink);
+    if (*xsink) {
+        return nullptr;
+    }
+    size_t len = qstr0->strlen();
+    size_t allocated = qstr0->capacity();
+    QoreString statement(qstr0.giveBuffer(), len, allocated, enc);
     if (binding) {
         if (parseForBind(statement, args, xsink)) {
             xsink->raiseException(calltype, "failed to parse bind variables");
@@ -321,6 +335,7 @@ QoreHashNode* QoreSqlite3Executor::select_internal(
         xsink->raiseException(calltype, "sqlite3 error: %s", sqlite3_errmsg(m_handler));
         return nullptr;
     }
+    ON_BLOCK_EXIT(sqlite3_finalize, stmt);
 
     if (binding && bindParameters(stmt, xsink)) {
         xsink->raiseException(calltype, "failed to bind variables");
@@ -342,7 +357,6 @@ QoreHashNode* QoreSqlite3Executor::select_internal(
         }
     }
 
-    sqlite3_finalize(stmt);
     return hash.release();
 }
 
@@ -529,7 +543,7 @@ int QoreSqlite3PreparedStatement::rowsAffected() {
     return sqlite3_changes(conn->handler());
 }
 
-QoreHashNode* QoreSqlite3PreparedStatement::describe(ExceptionSink *xsink) {
+QoreHashNode* QoreSqlite3PreparedStatement::describe(ExceptionSink* xsink) {
 #ifdef SQLITE_DESCRIBE
     // set up hash for row
     ReferenceHolder<QoreHashNode> h(new QoreHashNode(autoTypeInfo), xsink);

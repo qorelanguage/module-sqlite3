@@ -55,6 +55,9 @@ class Sqlite3BasicTest inherits QUnit::Test {
         on_exit execIgnore("drop view v_foo");
         assertEq(0, result);
 
+        result = ds.commit();
+        assertNothing(result);
+
         binary dat = File::readBinaryFile(get_script_dir() + "blob.png");
         {
             bool b;
@@ -64,6 +67,10 @@ class Sqlite3BasicTest inherits QUnit::Test {
                     "lorem ipsum", rand(), rand()/1.0, dat, b);
                 assertEq(1, result);
             }
+        }
+        {
+            Datasource ds1 = ds.copy();
+            assertEq((), ds1.selectRows("select * from foo"));
         }
 
         result = ds.commit();

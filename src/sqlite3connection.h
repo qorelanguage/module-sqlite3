@@ -40,7 +40,7 @@ public:
 
         \param sqlite3 * a reference to already inicialized sqlite3 handler.
     */
-    DLLLOCAL QoreSqlite3Connection(sqlite3* handler);
+    DLLLOCAL QoreSqlite3Connection(sqlite3* handler, const QoreEncoding* enc);
 
     DLLLOCAL ~QoreSqlite3Connection() {};
 
@@ -55,21 +55,21 @@ public:
 
         \retval bool true for success; false for any error.
     */
-    DLLLOCAL bool begin(ExceptionSink *xsink);
+    DLLLOCAL bool begin(ExceptionSink* xsink);
 
     /*! \brief Preforms a COMMIT statement without any transaction checking.
         Error checking is left for sqlite3 engine.
 
         \retval bool true for success; false for any error.
     */
-    DLLLOCAL bool commit(ExceptionSink *xsink);
+    DLLLOCAL bool commit(ExceptionSink* xsink);
 
     /*! \brief Preforms a ROLLBACK statement without any transaction checking.
         Error checking is left for sqlite3 engine.
 
         \retval bool true for success; false for any error.
     */
-    DLLLOCAL bool rollback(ExceptionSink *xsink);
+    DLLLOCAL bool rollback(ExceptionSink* xsink);
 
     /*! \brief Close active sqlite3 handler.
 
@@ -87,9 +87,17 @@ public:
     */
     DLLLOCAL char* getServerVersion();
 
+    //! Returns the Qore encoding to use for string data
+    DLLLOCAL const QoreEncoding* getEncoding() {
+        return enc;
+    }
+
 private:
     //! The current sqlite3 connection.
     sqlite3* m_handler;
+
+    //! The character encoding touse for string data
+    const QoreEncoding* enc;
 };
 
 #endif

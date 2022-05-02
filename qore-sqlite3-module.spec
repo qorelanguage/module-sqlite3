@@ -42,19 +42,22 @@
 %endif
 %endif
 
-Summary: Sqlite3 DBI module for Qore
+Summary: SQLite3 DBI module for Qore
 Name: qore-sqlite3-module
-Version: 1.0.2
+Version: 1.1.0
 Release: 1%{dist}
 License: LGPL
 Group: Development/Languages
 URL: http://www.qore.org
-Source: http://prdownloads.sourceforge.net/qore/%{name}-%{version}.tar.gz
+Source: http://prdownloads.sourceforge.net/qore/%{name}-%{version}.tar.bz2
 #Source0: %{name}-%{version}.tar.gz
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root
 Requires: /usr/bin/env
 Requires: qore-module-api-%{module_api}
 BuildRequires: gcc-c++
+%if 0%{?el7}
+BuildRequires:  devtoolset-7-gcc-c++
+%endif
 BuildRequires: qore-devel
 BuildRequires: qore
 BuildRequires: openssl-devel
@@ -77,16 +80,20 @@ Sqlite3 DBI driver module for the Qore Programming Language.
 
 %prep
 %setup -q
-./configure RPM_OPT_FLAGS="$RPM_OPT_FLAGS" --prefix=/usr --disable-debug
 
 %build
-%{__make}
+%if 0%{?el7}
+# enable devtoolset7
+. /opt/rh/devtoolset-7/enable
+unset PATH
+%endif
+export CXXFLAGS="%{?optflags}"
+cmake -DCMAKE_INSTALL_PREFIX=%{_prefix} -DCMAKE_BUILD_TYPE=RELWITHDEBINFO -DCMAKE_SKIP_RPATH=1 -DCMAKE_SKIP_INSTALL_RPATH=1 -DCMAKE_SKIP_BUILD_RPATH=1 -DCMAKE_PREFIX_PATH=${_prefix}/lib64/cmake/Qore .
+make %{?_smp_mflags}
+make docs
 
 %install
-rm -rf $RPM_BUILD_ROOT
-mkdir -p $RPM_BUILD_ROOT/%{module_dir}
-mkdir -p $RPM_BUILD_ROOT/usr/share/doc/qore-pgsql-module
-make install DESTDIR=$RPM_BUILD_ROOT
+make DESTDIR=%{buildroot} install %{?_smp_mflags}
 
 %clean
 rm -rf $RPM_BUILD_ROOT
@@ -94,9 +101,25 @@ rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-,root,root,-)
 %{module_dir}
-%doc COPYING README RELEASE-NOTES ChangeLog AUTHORS test/sqlite3test-basic.q test/sqlite3test-threading.q test/blob.png docs/sqlite3-module-doc.html
+%doc COPYING COPYING.MIT README AUTHORS
+
+%package doc
+Summary: SQLite3 DBI module for Qore
+Group: Development/Languages
+
+%description doc
+SQLite3 module for the Qore Programming Language.
+
+This RPM provides API documentation, test and example programs
+
+%files doc
+%defattr(-,root,root,-)
+%doc docs/sqlite3/html test/basic.qtest test/sqlite3test-threading.q test/blob.png
 
 %changelog
+* Mon May 2 2022 David Nichols <david.nichols@qoretechnologies.com>
+- updated to version 1.1.0
+
 * Tue Jul 13 2021 David Nichols <david.nichols@qoretechnologies.com>
 - updated to version 1.0.2
 

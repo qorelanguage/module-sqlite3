@@ -47,16 +47,21 @@ set(CPP_SRC
 
 set(module_name "sqlite3")
 
+set(QORE_DOX_TMPL_SRC
+  docs/mainpage.dox.tmpl
+)
+
 add_library(${module_name} MODULE ${CPP_SRC})
 
-qore_binary_module(${module_name} ${PROJECT_VERSION} ${SQLITE3_LDFLAGS} Threads::Threads)
+qore_external_binary_module(${module_name} ${PROJECT_VERSION} ${SQLITE3_LDFLAGS} Threads::Threads)
 
 qore_dist(${PROJECT_VERSION})
 
 qore_config_info()
 
-if(INSTALL_DOCS)
-include(GNUInstallDirs)
-install(FILES ${CMAKE_SOURCE_DIR}/docs/sqlite3-module-doc.html
-        DESTINATION ${CMAKE_INSTALL_FULL_DOCDIR}/html)
+FIND_PACKAGE(Doxygen)
+if (DOXYGEN_FOUND)
+    qore_wrap_dox(QORE_DOX_SRC ${QORE_DOX_TMPL_SRC})
+    add_custom_target(QORE_MOD_DOX_FILES DEPENDS ${QORE_DOX_SRC})
+    add_dependencies(docs-module QORE_MOD_DOX_FILES)
 endif()

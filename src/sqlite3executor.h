@@ -31,7 +31,8 @@
 //! Base SQL operation class
 class QoreSqlite3ExecBase {
 public:
-    DLLLOCAL QoreSqlite3ExecBase(QoreListNode* m_realArgs = nullptr) : m_realArgs(m_realArgs, nullptr) {
+    DLLLOCAL QoreSqlite3ExecBase(const QoreEncoding* enc, QoreListNode* m_realArgs = nullptr)
+            : enc(enc), m_realArgs(m_realArgs, nullptr) {
     }
 
     /*! \brief Prepare a string (SQL statement) for variables binding.
@@ -52,7 +53,7 @@ public:
 
         \retval bool 0 on success, -1 on error
     */
-    DLLLOCAL int bindParameters(sqlite3_stmt* stmt, ExceptionSink *xsink);
+    DLLLOCAL int bindParameters(sqlite3_stmt* stmt, ExceptionSink* xsink);
 
     /*! \brief Universal Sqlite3 to Qore nodes conversion.
         \param stmt a reference for sqlite3 SQL statement. It has to be
@@ -64,6 +65,9 @@ public:
     DLLLOCAL static QoreValue columnValue(sqlite3_stmt* stmt, int index);
 
 protected:
+    //! Encoding to use
+    const QoreEncoding* enc;
+
     //! Really used parameters list for statement (%s etc. filtered out)
     ReferenceHolder<QoreListNode> m_realArgs;
 };
@@ -75,7 +79,7 @@ protected:
 */
 class QoreSqlite3Executor : public QoreSqlite3ExecBase {
 public:
-    DLLLOCAL QoreSqlite3Executor(sqlite3 * handler, ExceptionSink *xsink);
+    DLLLOCAL QoreSqlite3Executor(sqlite3* handler, const QoreEncoding* enc, ExceptionSink* xsink);
 
     DLLLOCAL ~QoreSqlite3Executor();
 
@@ -93,7 +97,7 @@ public:
         Datasource *ds,
         const QoreString *qstr,
         const QoreListNode *args,
-        ExceptionSink *xsink);
+        ExceptionSink* xsink);
 
     /*! \brief Implementation for Qore DB API execRaw().
         It's primarily used for DDL statemets, but
@@ -107,7 +111,7 @@ public:
     DLLLOCAL QoreValue execRaw(
         Datasource *ds,
         const QoreString *qstr,
-        ExceptionSink *xsink);
+        ExceptionSink* xsink);
 
     /*! \brief Implementation for Qore DB API select().
         \param ds a Datasource reference from Qore API.
@@ -120,7 +124,7 @@ public:
         Datasource *ds,
         const QoreString *qstr,
         const QoreListNode *args,
-        ExceptionSink *xsink);
+        ExceptionSink* xsink);
 
     /*! \brief Implementation for Qore DB API selectRows().
         \param ds a Datasource reference from Qore API.
@@ -133,11 +137,11 @@ public:
         Datasource *ds,
         const QoreString *qstr,
         const QoreListNode *args,
-        ExceptionSink *xsink);
+        ExceptionSink* xsink);
 
 protected:
-    //! Everywhere used current sqlite3 connection.
-    sqlite3 * m_handler;
+    //! Current sqlite3 connection.
+    sqlite3* m_handler;
 
     /*! \brief Internal implementation of select() DB API.
         \param ds a Datasource reference from Qore API.
@@ -153,12 +157,13 @@ protected:
         const QoreListNode *args,
         bool binding,
         const char * calltype,
-        ExceptionSink *xsink);
+        ExceptionSink* xsink);
 };
 
 class QoreSqlite3PreparedStatement : public QoreSqlite3ExecBase {
 public:
-    DLLLOCAL QoreSqlite3PreparedStatement(Datasource* ds) : conn((QoreSqlite3Connection*)ds->getPrivateData()) {
+    DLLLOCAL QoreSqlite3PreparedStatement(Datasource* ds)
+        : QoreSqlite3ExecBase(QEM.findCreate(ds->getOSEncoding())), conn((QoreSqlite3Connection*)ds->getPrivateData()) {
     }
 
     DLLLOCAL ~QoreSqlite3PreparedStatement() {
@@ -180,14 +185,12 @@ public:
 
     DLLLOCAL int rowsAffected();
 
-    DLLLOCAL void reset(ExceptionSink *xsink);
+    DLLLOCAL void reset(ExceptionSink* xsink);
 
 protected:
     QoreSqlite3Connection* conn = nullptr;
     QoreString* sql = nullptr;
     sqlite3_stmt* stmt = nullptr;
-    //! encoing to use
-    const QoreEncoding* enc = QCS_UTF8;
 
     // SQL active flag
     bool sql_active = false;
