@@ -274,8 +274,7 @@ QoreListNode* QoreSqlite3Executor::select_rows(
         return nullptr;
     }
     size_t len = qstr0->strlen();
-    size_t allocated = qstr0->capacity();
-    QoreString statement(qstr0.giveBuffer(), len, allocated, enc);
+    QoreString statement(qstr0.giveBuffer(), len, len + 1, enc);
     if (parseForBind(statement, args, xsink)) {
         xsink->raiseException("SQLITE3-SELECT-ROWS", "failed to parse bind variables");
         return nullptr;
@@ -320,8 +319,7 @@ QoreHashNode* QoreSqlite3Executor::select_internal(
         return nullptr;
     }
     size_t len = qstr0->strlen();
-    size_t allocated = qstr0->capacity();
-    QoreString statement(qstr0.giveBuffer(), len, allocated, enc);
+    QoreString statement(qstr0.giveBuffer(), len, len + 1, enc);
     if (binding) {
         if (parseForBind(statement, args, xsink)) {
             xsink->raiseException(calltype, "failed to parse bind variables");
